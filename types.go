@@ -19,7 +19,7 @@ func NewAccount(firstName, lastName string) *Account {
 		ID:        rand.Int(),
 		FirstName: firstName,
 		LastName:  lastName,
-		Number:    int64(rand.Int()),
+		Number:    int64(rand.Intn(1000000)),
 		CreatedAt: time.Now().UTC(),
 	}
 }
