@@ -34,8 +34,8 @@ func (ps *PostgresStore) Init() error {
 func (ps *PostgresStore) createAccountTable() error {
 	query := `CREATE TABLE IF NOT EXISTS account (
 		ID serial primary key,
-		first_name varcha(50),
-		last_name varcha(50),
+		first_name varchar(50),
+		last_name varchar(50),
 		number serial,
 		balance serial,
 		created_at TIMESTAMP
