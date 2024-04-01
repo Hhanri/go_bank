@@ -1,6 +1,11 @@
 package main
 
-import "database/sql"
+import (
+	"database/sql"
+	"fmt"
+
+	_ "github.com/lib/pq"
+)
 
 type Storage interface {
 	CreateAcccount(*Account) error
