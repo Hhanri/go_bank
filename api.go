@@ -28,7 +28,7 @@ func (s *ApiServer) Run() {
 
 	router.HandleFunc("/account", makeHTTPHandleFunc(s.handleAccount))
 
-	router.HandleFunc("/account/{id}", withJWTAuth(makeHTTPHandleFunc(s.handleAccountById)))
+	router.HandleFunc("/account/{id}", s.withJWTAuth(makeHTTPHandleFunc(s.handleAccountById)))
 
 	router.HandleFunc("/transfer", makeHTTPHandleFunc(s.handleTransfer))
 
@@ -165,16 +165,42 @@ func getID(r *http.Request) (int, error) {
 	return id, nil
 }
 
-func withJWTAuth(handlerFunc http.HandlerFunc) http.HandlerFunc {
+func permissionDenied(w http.ResponseWriter) {
+	WriteJSON(w, http.StatusForbidden, ApiError{"Invalid Token"})
+}
+
+func (s *ApiServer) withJWTAuth(handlerFunc http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		tokenString := r.Header.Get("x-jwt-token")
 
-		_, err := validateJWT(tokenString)
-		if err != nil {
-			WriteJSON(w, http.StatusForbidden, ApiError{"Invalid Token"})
+		token, err := validateJWT(tokenString)
+		if err != nil || !token.Valid {
+			permissionDenied(w)
 			return
 		}
+
+		accountId, err := getID(r)
+
+		if err != nil {
+			permissionDenied(w)
+			return
+		}
+
+		account, err := s.storage.GetAccountById(accountId)
+
+		if err != nil {
+			permissionDenied(w)
+			return
+		}
+
+		claims := token.Claims.(jwt.MapClaims)
+
+		if account.Number != int64(claims["accountNumber"].(float64)) {
+			permissionDenied(w)
+			return
+		}
+
 		handlerFunc(w, r)
 	}
 }
