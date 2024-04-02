@@ -74,6 +74,11 @@ func (ps *PostgresStore) CreateAcccount(account *Account) error {
 }
 
 func (ps *PostgresStore) DeleteAccount(id int) error {
+	_, err := ps.db.Query("delete from account where id = $1", id)
+
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
