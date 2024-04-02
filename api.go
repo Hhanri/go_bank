@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
+	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
 )
 
@@ -27,7 +28,7 @@ func (s *ApiServer) Run() {
 
 	router.HandleFunc("/account", makeHTTPHandleFunc(s.handleAccount))
 
-	router.HandleFunc("/account/{id}", makeHTTPHandleFunc(s.handleAccountById))
+	router.HandleFunc("/account/{id}", withJWTAuth(makeHTTPHandleFunc(s.handleAccountById)))
 
 	router.HandleFunc("/transfer", makeHTTPHandleFunc(s.handleTransfer))
 
@@ -157,4 +158,30 @@ func getID(r *http.Request) (int, error) {
 	}
 
 	return id, nil
+}
+
+func withJWTAuth(handlerFunc http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		tokenString := r.Header.Get("x-jwt-token")
+
+		_, err := validateJWT(tokenString)
+		if err != nil {
+			WriteJSON(w, http.StatusForbidden, ApiError{"Invalid Token"})
+			return
+		}
+		handlerFunc(w, r)
+	}
+}
+
+const secret = "someSecret"
+
+func validateJWT(tokenString string) (*jwt.Token, error) {
+	return jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method %v", token.Header["alg"])
+		}
+		return []byte(secret), nil
+	})
 }
