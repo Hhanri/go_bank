@@ -82,7 +82,19 @@ func (ps *PostgresStore) UpdateAccount(account *Account) error {
 }
 
 func (ps *PostgresStore) GetAccountById(id int) (*Account, error) {
-	return nil, nil
+	rows, err := ps.db.Query("select * from account where ID = $1", id)
+
+	if err != nil {
+		fmt.Println("Error in db query")
+		fmt.Println(err)
+		return nil, err
+	}
+
+	for rows.Next() {
+		return scanIntoAccount(rows)
+	}
+
+	return nil, fmt.Errorf("account %d not found", id)
 }
 
 func (ps *PostgresStore) GetAccounts() ([]*Account, error) {
