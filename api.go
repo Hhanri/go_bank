@@ -89,20 +89,20 @@ func (s *ApiServer) handleGetAccountById(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *ApiServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) error {
+
 	createAccountReq := new(CreateAccountRequest)
 
 	if err := json.NewDecoder(r.Body).Decode(createAccountReq); err != nil {
 		return err
 	}
 
-	account := NewAccount(createAccountReq.FirstName, createAccountReq.LastName)
+	account, err := NewAccount(createAccountReq.FirstName, createAccountReq.LastName, createAccountReq.Password)
 
-	newAccount, err := s.storage.CreateAcccount(account)
 	if err != nil {
-		return err
+		return nil
 	}
 
-	tokenString, err := createJWT(newAccount)
+	newAccount, err := s.storage.CreateAcccount(account)
 	if err != nil {
 		return err
 	}
