@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -58,7 +59,20 @@ func (s *ApiServer) handleGetAccount(w http.ResponseWriter, r *http.Request) err
 }
 
 func (s *ApiServer) handleGetAccountById(w http.ResponseWriter, r *http.Request) error {
-	return nil
+	idStr := mux.Vars(r)["id"]
+	id, err := strconv.Atoi(idStr)
+
+	if err != nil {
+		return fmt.Errorf("invalid id given %s", idStr)
+	}
+
+	account, err := s.storage.GetAccountById(id)
+
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(w, http.StatusOK, account)
 }
 
 func (s *ApiServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) error {
