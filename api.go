@@ -27,7 +27,7 @@ func (s *ApiServer) Run() {
 
 	router.HandleFunc("/account", makeHTTPHandleFunc(s.handleAccount))
 
-	router.HandleFunc("/account/{id}", makeHTTPHandleFunc(s.handleGetAccountById))
+	router.HandleFunc("/account/{id}", makeHTTPHandleFunc(s.handleAccountById))
 
 	log.Println("JSON API server running on port")
 
@@ -41,6 +41,17 @@ func (s *ApiServer) handleAccount(w http.ResponseWriter, r *http.Request) error 
 		return s.handleGetAccount(w, r)
 	case "POST":
 		return s.handleCreateAccount(w, r)
+	case "DELETE":
+		return s.handleDeleteAccount(w, r)
+	}
+
+	return fmt.Errorf("method not allowed: %s", r.Method)
+}
+
+func (s *ApiServer) handleAccountById(w http.ResponseWriter, r *http.Request) error {
+	switch r.Method {
+	case "GET":
+		return s.handleGetAccountById(w, r)
 	case "DELETE":
 		return s.handleDeleteAccount(w, r)
 	}
@@ -91,7 +102,16 @@ func (s *ApiServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *ApiServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request) error {
-	return nil
+	id, err := getID(r)
+	if err != nil {
+		return err
+	}
+
+	if err := s.storage.DeleteAccount(id); err != nil {
+		return err
+	}
+
+	return WriteJSON(w, http.StatusOK, map[string]any{"success": true})
 }
 
 func (s *ApiServer) handleTransfer(w http.ResponseWriter, r *http.Request) error {
