@@ -97,16 +97,17 @@ func (s *ApiServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 
 	account := NewAccount(createAccountReq.FirstName, createAccountReq.LastName)
 
-	if err := s.storage.CreateAcccount(account); err != nil {
-		return err
-	}
-
-	tokenString, err := createJWT(account)
+	newAccount, err := s.storage.CreateAcccount(account)
 	if err != nil {
 		return err
 	}
 
-	return WriteJSON(w, http.StatusOK, account)
+	tokenString, err := createJWT(newAccount)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(w, http.StatusOK, newAccount)
 }
 
 func (s *ApiServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request) error {

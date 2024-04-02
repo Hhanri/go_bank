@@ -8,7 +8,7 @@ import (
 )
 
 type Storage interface {
-	CreateAcccount(*Account) error
+	CreateAcccount(*Account) (*Account, error)
 	DeleteAccount(int) error
 	UpdateAccount(*Account) error
 	GetAccountById(int) (*Account, error)
@@ -51,9 +51,10 @@ func (ps *PostgresStore) createAccountTable() error {
 	return err
 }
 
-func (ps *PostgresStore) CreateAcccount(account *Account) error {
+func (ps *PostgresStore) CreateAcccount(account *Account) (*Account, error) {
 	query := `insert into account (first_name, last_name, number, balance, created_at)
-	values ($1, $2, $3, $4, $5)`
+	values ($1, $2, $3, $4, $5)
+	returning *`
 
 	resp, err := ps.db.Query(
 		query,
@@ -65,12 +66,16 @@ func (ps *PostgresStore) CreateAcccount(account *Account) error {
 	)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	fmt.Printf("%+v\n", resp)
 
-	return nil
+	for resp.Next() {
+		return scanIntoAccount(resp)
+	}
+
+	return nil, fmt.Errorf("bad sql row")
 }
 
 func (ps *PostgresStore) DeleteAccount(id int) error {
