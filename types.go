@@ -47,7 +47,7 @@ type TransferRequest struct {
 
 type LoginRequest struct {
 	Number   int64  `json:"number"`
-	Password string `json:"amount"`
+	Password string `json:"password"`
 }
 
 type LoginResponse struct {
