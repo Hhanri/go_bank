@@ -46,11 +46,12 @@ func (s *ApiServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	loginReq := new(LoginRequest)
-	defer r.Body.Close()
 
 	if err := json.NewDecoder(r.Body).Decode(loginReq); err != nil {
 		return err
 	}
+
+	defer r.Body.Close()
 
 	account, err := s.storage.GetAccountByNumber(int(loginReq.Number))
 
@@ -58,7 +59,17 @@ func (s *ApiServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	return WriteJSON(w, http.StatusOK, account)
+	token, err := createJWT(account)
+	if err != nil {
+		return err
+	}
+
+	response := LoginResponse{
+		Number: account.Number,
+		Token:  token,
+	}
+
+	return WriteJSON(w, http.StatusOK, response)
 }
 
 func (s *ApiServer) handleAccount(w http.ResponseWriter, r *http.Request) error {
