@@ -59,11 +59,10 @@ func (s *ApiServer) handleGetAccount(w http.ResponseWriter, r *http.Request) err
 }
 
 func (s *ApiServer) handleGetAccountById(w http.ResponseWriter, r *http.Request) error {
-	idStr := mux.Vars(r)["id"]
-	id, err := strconv.Atoi(idStr)
+	id, err := getID(r)
 
 	if err != nil {
-		return fmt.Errorf("invalid id given %s", idStr)
+		return err
 	}
 
 	account, err := s.storage.GetAccountById(id)
@@ -117,4 +116,15 @@ func makeHTTPHandleFunc(f apiFunc) http.HandlerFunc {
 			WriteJSON(w, http.StatusBadRequest, ApiError{err.Error()})
 		}
 	}
+}
+
+func getID(r *http.Request) (int, error) {
+	idStr := mux.Vars(r)["id"]
+	id, err := strconv.Atoi(idStr)
+
+	if err != nil {
+		return id, fmt.Errorf("invalid id given %s", idStr)
+	}
+
+	return id, nil
 }
