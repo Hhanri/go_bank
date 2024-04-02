@@ -26,6 +26,8 @@ func NewApiServer(listenAddress string, storage Storage) *ApiServer {
 func (s *ApiServer) Run() {
 	router := mux.NewRouter()
 
+	router.HandleFunc("/login", makeHTTPHandleFunc(s.handleLogin))
+
 	router.HandleFunc("/account", makeHTTPHandleFunc(s.handleAccount))
 
 	router.HandleFunc("/account/{id}", s.withJWTAuth(makeHTTPHandleFunc(s.handleAccountById)))
@@ -35,6 +37,22 @@ func (s *ApiServer) Run() {
 	log.Println("JSON API server running on port")
 
 	http.ListenAndServe(s.listenAddress, router)
+}
+
+func (s *ApiServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
+
+	if r.Method != "POST" {
+		return fmt.Errorf("method not allowed: %s", r.Method)
+	}
+
+	loginReq := new(LoginRequest)
+	defer r.Body.Close()
+
+	if err := json.NewDecoder(r.Body).Decode(loginReq); err != nil {
+		return err
+	}
+
+	return WriteJSON(w, http.StatusOK, loginReq)
 }
 
 func (s *ApiServer) handleAccount(w http.ResponseWriter, r *http.Request) error {
@@ -217,6 +235,8 @@ func validateJWT(tokenString string) (*jwt.Token, error) {
 		return []byte(secret), nil
 	})
 }
+
+// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50TnVtYmVyIjoyMzE1OTAsImV4cGlyZXNBdCI6MTUwMH0.dUngXP_QSeaHuaDs5fUtUTpedXvpSNeg3VBO2LKZdA8
 func createJWT(account *Account) (string, error) {
 	claims := &jwt.MapClaims{
 		"expiresAt":     1500,
