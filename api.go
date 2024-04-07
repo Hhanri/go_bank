@@ -59,6 +59,10 @@ func (s *ApiServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	if !account.ValidatePassword(loginReq.Password) {
+		return fmt.Errorf("not authenticated")
+	}
+
 	token, err := createJWT(account)
 	if err != nil {
 		return err

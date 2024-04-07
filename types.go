@@ -34,6 +34,10 @@ func NewAccount(firstName, lastName, password string) (*Account, error) {
 	}, nil
 }
 
+func (a *Account) ValidatePassword(pw string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(a.EncryptedPassword), []byte(pw)) == nil
+}
+
 type CreateAccountRequest struct {
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`
